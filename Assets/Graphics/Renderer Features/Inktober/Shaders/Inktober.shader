@@ -6,6 +6,7 @@ Shader "Screen/Inktober"
 		ZWrite Off
 		ZTest Always
 
+		// 0 - Luminance Pass
 		Pass
 		{
 			Name "Luminance"
@@ -36,7 +37,7 @@ Shader "Screen/Inktober"
 
 		Pass
 		{
-			// Edge Detection via Sobel-Feldman Operator
+			// 1 - Edge Detection via Sobel-Feldman Operator
 			Name "Sobel"
 
 			HLSLPROGRAM
@@ -48,6 +49,8 @@ Shader "Screen/Inktober"
 
 			float4 _BlitTexture_TexelSize;
 			SamplerState sampler_point_clamp;
+
+			float _SampleRange;
 
             static float2 samplePoints[9] =
             {
@@ -77,7 +80,7 @@ Shader "Screen/Inktober"
 
 				for (int i = 0; i < 9; i++)
 				{
-					float2 uv = input.texcoord + _BlitTexture_TexelSize.zw * samplePoints[i];
+					float2 uv = input.texcoord + (_BlitTexture_TexelSize.xy * _SampleRange * samplePoints[i]);
 
 					half l = _BlitTexture.Sample(sampler_point_clamp, uv).a;
 
@@ -92,7 +95,7 @@ Shader "Screen/Inktober"
 			ENDHLSL
 		}
 
-		// Canny Intensity Pass (Sobel-Feldman)
+		// 2 - Canny Gradient Intensity Pass (Sobel-Feldman)
 		Pass
 		{
 			Name "Intensity"
@@ -106,6 +109,8 @@ Shader "Screen/Inktober"
 						
 			float4 _BlitTexture_TexelSize;
 			SamplerState sampler_point_clamp;
+
+			float _SampleRange;
 
             static float2 samplePoints[9] =
             {
@@ -130,14 +135,16 @@ Shader "Screen/Inktober"
 
 			float4 Frag(Varyings input) : SV_Target
 			{
+				float2 sobel = 0.0f;
+
 				float Gx = 0.0f;
 				float Gy = 0.0f;
 
 				for (int i = 0; i < 9; i++)
 				{
-					float2 uv = input.texcoord + _BlitTexture_TexelSize.zw * samplePoints[i];
+					float2 uv = input.texcoord + (_BlitTexture_TexelSize.xy * _SampleRange * samplePoints[i]);
 
-					half l = _BlitTexture.Sample(sampler_point_clamp, uv).a;
+					half l = _BlitTexture.Sample(sampler_point_clamp, uv).r;
 
 					Gx += Kx[i] * l;
 					Gy += Ky[i] * l;
@@ -146,13 +153,13 @@ Shader "Screen/Inktober"
 				float mag = sqrt(Gx * Gx + Gy * Gy);
 				float theta = abs(atan2(Gy, Gx));
 
-				return float4(Gx, Gy, theta, mag);
+				return float4(theta, mag, Gy, 1);
 			}
 
 			ENDHLSL
 		}
 
-		// Canny Magnitude Suppression Pass
+		// 3 - Canny Magnitude Suppression Pass
 		Pass
 		{
 			Name "Suppression"
@@ -167,9 +174,11 @@ Shader "Screen/Inktober"
 			float4 _BlitTexture_TexelSize;
 			SamplerState sampler_point_clamp;
 
+			float _SampleRange;
+
 			float CardinalMagnitude(float2 uv, float2 direction)
 			{
-				return _BlitTexture.Sample(sampler_point_clamp, uv + _BlitTexture_TexelSize.zw * direction).a;
+				return _BlitTexture.Sample(sampler_point_clamp, uv + (_BlitTexture_TexelSize.xy * _SampleRange * direction)).y;
 			}
 
 			float4 Frag(Varyings input) : SV_Target
@@ -177,8 +186,8 @@ Shader "Screen/Inktober"
 				float2 uv = input.texcoord;
 				float4 canny = _BlitTexture.Sample(sampler_point_clamp, uv);
 
-				float mag = canny.a;
-				float theta = degrees(canny.b);
+				float mag = canny.y;
+				float theta = degrees(canny.z);
 
 				if ((0.0f <= theta && theta <= 45.0f) || (135.0f <= theta && theta <= 180.0f))
 				{
@@ -201,7 +210,7 @@ Shader "Screen/Inktober"
 			ENDHLSL
 		}
 
-		// Canny Double Threshold Pass
+		// 4 - Canny Double Threshold Pass
 		Pass
 		{
 			Name "Thresholds"
@@ -218,7 +227,7 @@ Shader "Screen/Inktober"
 
 			float4 Frag(Varyings input) : SV_Target
 			{
-				float mag = _BlitTexture.Sample(sampler_point_clamp, input.texcoord).a;
+				float mag = _BlitTexture.Sample(sampler_point_clamp, input.texcoord).y;
 
 				float4 result = 0.0f;
 
@@ -237,7 +246,7 @@ Shader "Screen/Inktober"
 			ENDHLSL
 		}
 
-		// Canny Hysteresis Pass
+		// 5 - Canny Hysteresis Pass
 		Pass
 		{
 			Name "Hysteresis"
@@ -252,6 +261,8 @@ Shader "Screen/Inktober"
 
 			float4 _BlitTexture_TexelSize;
 			SamplerState sampler_point_clamp;
+
+			float _SampleRange;
 
 			float preserve(float2 uv)
 			{
@@ -268,8 +279,8 @@ Shader "Screen/Inktober"
 							continue;
 						}
 
-                        float2 nuv = uv + _BlitTexture_TexelSize.zw * float2(x, y);
-	                    half neighborStrength = _BlitTexture.Sample(sampler_point_clamp, nuv).a;
+                        float2 nuv = uv + _BlitTexture_TexelSize.xy * _SampleRange * float2(x, y);
+	                    half neighborStrength = _BlitTexture.Sample(sampler_point_clamp, nuv).r;
 
 		                if (neighborStrength == 1.0f)
 						{
@@ -283,7 +294,7 @@ Shader "Screen/Inktober"
 
             float4 Frag(Varyings input) : SV_Target
 			{
-		        float strength = _BlitTexture.Sample(sampler_point_clamp, input.texcoord).a;
+		        float strength = _BlitTexture.Sample(sampler_point_clamp, input.texcoord).r;
 
 			    float4 result = strength;
 

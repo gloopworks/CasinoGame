@@ -72,3 +72,5 @@ MonoBehaviour:
   runInSceneView: 1
   settings:
     <RenderPassEvent>k__BackingField: 500
+    <LowThreshold>k__BackingField: 0.1
+    <HighThreshold>k__BackingField: 0.2

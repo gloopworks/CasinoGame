@@ -15,14 +15,22 @@ namespace MixJam13.Graphics.RendererFeatures.Inktober
         private Material material;
         private InktoberSettings settings;
 
-        private RTHandle rtTempColor;
+        private RTHandle rtLuminance;
+        private RTHandle rtGradientIntensity;
+        private RTHandle rtMagnitudeSuppression;
+        private RTHandle rtDoubleThreshold;
+        private RTHandle rtHysteresis;
 
         public override void OnCameraSetup(CommandBuffer cmd, ref RenderingData renderingData)
         {
             RenderTextureDescriptor descriptor = renderingData.cameraData.cameraTargetDescriptor;
             descriptor.depthBufferBits = 0;
 
-            _ = RenderingUtils.ReAllocateIfNeeded(ref rtTempColor, descriptor, name: "_TemporaryColorTexture");
+            _ = RenderingUtils.ReAllocateIfNeeded(ref rtLuminance, descriptor, name: "_LuminanceTexture");
+            _ = RenderingUtils.ReAllocateIfNeeded(ref rtGradientIntensity, descriptor, name: "_GradientIntensityTexture");
+            _ = RenderingUtils.ReAllocateIfNeeded(ref rtMagnitudeSuppression, descriptor, name: "_MagnitudeSuppressionTexture");
+            _ = RenderingUtils.ReAllocateIfNeeded(ref rtDoubleThreshold, descriptor, name: "_DoubleThresholdTexture");
+            _ = RenderingUtils.ReAllocateIfNeeded(ref rtHysteresis, descriptor, name: "_HysterisisTexture");
 
             RTHandle camTarget = renderingData.cameraData.renderer.cameraColorTargetHandle;
             RTHandle depthTarget = renderingData.cameraData.renderer.cameraDepthTargetHandle;
@@ -39,21 +47,50 @@ namespace MixJam13.Graphics.RendererFeatures.Inktober
             context.ExecuteCommandBuffer(cmd);
             cmd.Clear();
 
+            material.SetFloat("_LowThreshold", settings.LowThreshold);
+            material.SetFloat("_HighThreshold", settings.HighThreshold);
+
+            material.SetFloat("_SampleRange", settings.SampleRange);
+
             using (new ProfilingScope(cmd, new ProfilingSampler("Luminance Pass")))
             {
-                Blitter.BlitCameraTexture(cmd, camTarget, rtTempColor, material, 0);
-                Blitter.BlitCameraTexture(cmd, rtTempColor, camTarget);
+                Blitter.BlitCameraTexture(cmd, camTarget, rtLuminance, material, 0);
             }
+
+            using (new ProfilingScope(cmd, new ProfilingSampler("Gradient Intensity Pass")))
+            {
+                Blitter.BlitCameraTexture(cmd, rtLuminance, rtGradientIntensity, material, 2);
+            }
+
+            using (new ProfilingScope(cmd, new ProfilingSampler("Magnitude Suppression Pass")))
+            {
+                Blitter.BlitCameraTexture(cmd, rtGradientIntensity, rtMagnitudeSuppression, material, 3);
+            }
+
+            using (new ProfilingScope(cmd, new ProfilingSampler("Double Threshold Pass")))
+            {
+                Blitter.BlitCameraTexture(cmd, rtMagnitudeSuppression, rtDoubleThreshold, material, 4);
+            }
+
+            using (new ProfilingScope(cmd, new ProfilingSampler("Hysteresis Pass")))
+            {
+                Blitter.BlitCameraTexture(cmd, rtDoubleThreshold, rtHysteresis, material, 5);
+                Blitter.BlitCameraTexture(cmd, rtHysteresis, camTarget);
+            }
+
 
             context.ExecuteCommandBuffer(cmd);
             cmd.Clear();
-
             CommandBufferPool.Release(cmd);
         }
 
         public void Dispose()
         {
-            rtTempColor?.Release();
+            rtLuminance?.Release();
+            rtGradientIntensity?.Release();
+            rtMagnitudeSuppression?.Release();
+            rtDoubleThreshold?.Release();
+            rtHysteresis?.Release();
         }
     }
 }
