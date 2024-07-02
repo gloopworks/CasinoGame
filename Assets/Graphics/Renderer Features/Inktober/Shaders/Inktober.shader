@@ -349,7 +349,37 @@ Shader "Screen/Inktober"
 				luminance = pow(luminance, 1.0f / _LuminanceCorrection);
 				luminance = min(1.0f, max(0.0f, luminance));
 
-				return luminance < stipple ? 0.0f : 1.0f;
+				return luminance < stipple ? 1.0f : 0.0f;
+			}
+
+			ENDHLSL
+		}
+
+		// 7 - Combination Pass
+		Pass
+		{
+			Name "Combination"
+
+			HLSLPROGRAM
+
+			#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+			#include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
+
+			#pragma vertex Vert
+			#pragma fragment Frag
+
+			SamplerState sampler_point_clamp;
+
+			TEXTURE2D(_EdgeTex);
+
+			float4 Frag(Varyings input) : SV_Target
+			{
+				float edge = _EdgeTex.Sample(sampler_point_clamp, input.texcoord).r;
+				float stipple = _BlitTexture.Sample(sampler_point_clamp, input.texcoord).r;
+
+				float4 result = 1 - (edge + stipple);
+
+				return result;
 			}
 
 			ENDHLSL

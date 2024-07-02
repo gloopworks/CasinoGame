@@ -21,6 +21,7 @@ namespace MixJam13.Graphics.RendererFeatures.Inktober
         private RTHandle rtDoubleThreshold;
         private RTHandle rtHysteresis;
         private RTHandle rtStipple;
+        private RTHandle rtCombination;
 
         public override void OnCameraSetup(CommandBuffer cmd, ref RenderingData renderingData)
         {
@@ -33,6 +34,7 @@ namespace MixJam13.Graphics.RendererFeatures.Inktober
             _ = RenderingUtils.ReAllocateIfNeeded(ref rtDoubleThreshold, descriptor, name: "_DoubleThresholdTexture");
             _ = RenderingUtils.ReAllocateIfNeeded(ref rtHysteresis, descriptor, name: "_HysterisisTexture");
             _ = RenderingUtils.ReAllocateIfNeeded(ref rtStipple, descriptor, name: "_StippleTexture");
+            _ = RenderingUtils.ReAllocateIfNeeded(ref rtCombination, descriptor, name: "_CombinationTexture");
 
             RTHandle camTarget = renderingData.cameraData.renderer.cameraColorTargetHandle;
             RTHandle depthTarget = renderingData.cameraData.renderer.cameraDepthTargetHandle;
@@ -88,7 +90,13 @@ namespace MixJam13.Graphics.RendererFeatures.Inktober
             using (new ProfilingScope(cmd, new ProfilingSampler("Stippling Pass")))
             {
                 Blitter.BlitCameraTexture(cmd, rtLuminance, rtStipple, material, 6);
-                Blitter.BlitCameraTexture(cmd, rtStipple, camTarget);
+            }
+
+            using (new ProfilingScope(cmd, new ProfilingSampler("Combination Pass")))
+            {
+                material.SetTexture("_EdgeTex", rtHysteresis);
+                Blitter.BlitCameraTexture(cmd, rtStipple, rtCombination, material, 7);
+                Blitter.BlitCameraTexture(cmd, rtCombination, camTarget);
             }
 
             context.ExecuteCommandBuffer(cmd);
@@ -104,6 +112,7 @@ namespace MixJam13.Graphics.RendererFeatures.Inktober
             rtDoubleThreshold?.Release();
             rtHysteresis?.Release();
             rtStipple?.Release();
+            rtCombination?.Release();
         }
     }
 }
