@@ -20,6 +20,7 @@ namespace MixJam13.Graphics.RendererFeatures.Inktober
         private RTHandle rtMagnitudeSuppression;
         private RTHandle rtDoubleThreshold;
         private RTHandle rtHysteresis;
+        private RTHandle rtStipple;
 
         public override void OnCameraSetup(CommandBuffer cmd, ref RenderingData renderingData)
         {
@@ -31,6 +32,7 @@ namespace MixJam13.Graphics.RendererFeatures.Inktober
             _ = RenderingUtils.ReAllocateIfNeeded(ref rtMagnitudeSuppression, descriptor, name: "_MagnitudeSuppressionTexture");
             _ = RenderingUtils.ReAllocateIfNeeded(ref rtDoubleThreshold, descriptor, name: "_DoubleThresholdTexture");
             _ = RenderingUtils.ReAllocateIfNeeded(ref rtHysteresis, descriptor, name: "_HysterisisTexture");
+            _ = RenderingUtils.ReAllocateIfNeeded(ref rtStipple, descriptor, name: "_StippleTexture");
 
             RTHandle camTarget = renderingData.cameraData.renderer.cameraColorTargetHandle;
             RTHandle depthTarget = renderingData.cameraData.renderer.cameraDepthTargetHandle;
@@ -47,10 +49,16 @@ namespace MixJam13.Graphics.RendererFeatures.Inktober
             context.ExecuteCommandBuffer(cmd);
             cmd.Clear();
 
+            material.SetFloat("_SampleRange", settings.SampleRange);
+
             material.SetFloat("_LowThreshold", settings.LowThreshold);
             material.SetFloat("_HighThreshold", settings.HighThreshold);
 
-            material.SetFloat("_SampleRange", settings.SampleRange);
+            material.SetTexture("_StippleTex", settings.StippleTexture);
+            material.SetFloat("_StippleSize", settings.StippleSize);
+
+            material.SetFloat("_LuminanceContrast", settings.LuminanceContrast);
+            material.SetFloat("_LuminanceCorrection", settings.LuminanceCorrection);
 
             using (new ProfilingScope(cmd, new ProfilingSampler("Luminance Pass")))
             {
@@ -75,9 +83,13 @@ namespace MixJam13.Graphics.RendererFeatures.Inktober
             using (new ProfilingScope(cmd, new ProfilingSampler("Hysteresis Pass")))
             {
                 Blitter.BlitCameraTexture(cmd, rtDoubleThreshold, rtHysteresis, material, 5);
-                Blitter.BlitCameraTexture(cmd, rtHysteresis, camTarget);
             }
 
+            using (new ProfilingScope(cmd, new ProfilingSampler("Stippling Pass")))
+            {
+                Blitter.BlitCameraTexture(cmd, rtLuminance, rtStipple, material, 6);
+                Blitter.BlitCameraTexture(cmd, rtStipple, camTarget);
+            }
 
             context.ExecuteCommandBuffer(cmd);
             cmd.Clear();
@@ -91,6 +103,7 @@ namespace MixJam13.Graphics.RendererFeatures.Inktober
             rtMagnitudeSuppression?.Release();
             rtDoubleThreshold?.Release();
             rtHysteresis?.Release();
+            rtStipple?.Release();
         }
     }
 }

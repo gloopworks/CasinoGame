@@ -11,9 +11,29 @@ namespace MixJam13.Graphics.RendererFeatures.Inktober
 
         [field: SerializeField, Header("Canny Edge Detection Settings"), Range(0.0f, 1.0f)]
         public float LowThreshold { get; set; } = 0.1f;
+        
+
         [field: SerializeField, Range(0.0f, 1.0f)]
         public float HighThreshold { get; set; } = 0.8f;
 
-        [field: Space, SerializeField, Range(1.0f, 10.0f)] public float SampleRange { get; set; } = 1.0f;
+
+        [field: Space, SerializeField, Range(1.0f, 10.0f)]
+        public float SampleRange { get; set; } = 1.0f;
+
+
+        [field: SerializeField, Header("Stippling")]
+        public Texture2D StippleTexture { get; set; }
+
+
+        [field: SerializeField, Range(0.01f, 1.0f)]
+        public float StippleSize { get; set; } = 1.0f;
+
+
+        [field: SerializeField, Range(0.01f, 5.0f)]
+        public float LuminanceContrast { get; set; } = 1.0f;
+
+
+        [field: SerializeField, Range(0.0f, 10.0f)]
+        public float LuminanceCorrection { get; set; } = 1.0f;
     }
 }

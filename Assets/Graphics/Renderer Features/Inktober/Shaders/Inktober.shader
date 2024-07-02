@@ -308,5 +308,51 @@ Shader "Screen/Inktober"
 
 			ENDHLSL
 		}
+
+		// 6 - Stippling Pass
+		Pass
+		{
+			Name "Stippling"
+
+			HLSLPROGRAM
+
+			#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+			#include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
+
+			#pragma vertex Vert
+			#pragma fragment Frag
+
+			float4 _BlitTexture_TexelSize;
+			SamplerState sampler_point_clamp;
+			SamplerState sampler_bilinear_repeat;
+
+			TEXTURE2D(_StippleTex);
+			float4 _StippleTex_TexelSize;
+
+			float _StippleSize;
+
+			float _LuminanceContrast, _LuminanceCorrection;
+
+
+			float4 Frag(Varyings input) : SV_Target
+			{
+				float luminance = _BlitTexture.Sample(sampler_point_clamp, input.texcoord).r;
+
+				float2 stippleCoord = input.texcoord;
+				stippleCoord *= _BlitTexture_TexelSize.zw * _StippleTex_TexelSize;
+				stippleCoord *= _StippleSize;
+
+				float stipple = _StippleTex.Sample(sampler_bilinear_repeat, stippleCoord);
+
+				luminance = _LuminanceContrast * (luminance - 0.5f) + 0.5f;
+				luminance = min(1.0f, max(0.0f, luminance));
+				luminance = pow(luminance, 1.0f / _LuminanceCorrection);
+				luminance = min(1.0f, max(0.0f, luminance));
+
+				return luminance < stipple ? 0.0f : 1.0f;
+			}
+
+			ENDHLSL
+		}
 	}
 }
