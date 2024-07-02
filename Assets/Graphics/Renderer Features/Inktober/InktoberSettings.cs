@@ -39,5 +39,17 @@ namespace MixJam13.Graphics.RendererFeatures.Inktober
 
         [field: SerializeField, Range(0.0f, 10.0f)]
         public float LuminanceCorrection { get; set; } = 1.0f;
+
+
+        [field: SerializeField, Header("Paper Overlay")]
+        public Texture2D PaperOverlayTexture { get; set; }
+
+
+        [field: SerializeField]
+        public Color PaperTint { get; set; }
+
+
+        [field: SerializeField, Space]
+        public Color InkColor { get; set; }
     }
 }

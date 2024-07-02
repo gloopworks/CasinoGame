@@ -77,6 +77,9 @@ MonoBehaviour:
     <SampleRange>k__BackingField: 1
     <InvertedEdgeLuminanceThreshold>k__BackingField: 0.1
     <StippleTexture>k__BackingField: {fileID: 2800000, guid: d8887be45c3de834bbc33d8c93dfce33, type: 3}
-    <StippleSize>k__BackingField: 0.5
-    <LuminanceContrast>k__BackingField: 1
+    <StippleSize>k__BackingField: 1
+    <LuminanceContrast>k__BackingField: 2
     <LuminanceCorrection>k__BackingField: 1
+    <PaperOverlayTexture>k__BackingField: {fileID: 2800000, guid: da69029af9c77fb458449022b6779209, type: 3}
+    <PaperTint>k__BackingField: {r: 1, g: 0.9845544, b: 0.9292453, a: 1}
+    <InkColor>k__BackingField: {r: 0.11320752, g: 0.07589443, b: 0.04432181, a: 1}

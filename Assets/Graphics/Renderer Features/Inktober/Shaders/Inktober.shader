@@ -391,5 +391,38 @@ Shader "Screen/Inktober"
 
 			ENDHLSL
 		}
+
+		// 8 - Overlay Pass
+		Pass
+		{
+			Name "Overlay"
+
+			HLSLPROGRAM
+
+			#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+			#include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
+
+			#pragma vertex Vert
+			#pragma fragment Frag
+
+			SamplerState sampler_point_clamp;
+			TEXTURE2D(_OverlayTex);
+
+			float4 _OverlayTint, _InkColor;
+
+			float4 Frag(Varyings input) : SV_Target
+			{
+				float main = 1 - _BlitTexture.Sample(sampler_point_clamp, input.texcoord).r;
+				float4 overlay = _OverlayTex.Sample(sampler_point_clamp, input.texcoord) * _OverlayTint;
+
+				float4 ink = main * _InkColor * overlay;
+
+				float4 output = lerp(overlay, ink, main);
+
+				return output;
+			}
+
+			ENDHLSL
+		}
 	}
 }

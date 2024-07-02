@@ -16,12 +16,16 @@ namespace MixJam13.Graphics.RendererFeatures.Inktober
         private InktoberSettings settings;
 
         private RTHandle rtLuminance;
+
         private RTHandle rtGradientIntensity;
         private RTHandle rtMagnitudeSuppression;
         private RTHandle rtDoubleThreshold;
         private RTHandle rtHysteresis;
+
         private RTHandle rtStipple;
+
         private RTHandle rtCombination;
+        private RTHandle rtOverlay;
 
         public override void OnCameraSetup(CommandBuffer cmd, ref RenderingData renderingData)
         {
@@ -35,6 +39,7 @@ namespace MixJam13.Graphics.RendererFeatures.Inktober
             _ = RenderingUtils.ReAllocateIfNeeded(ref rtHysteresis, descriptor, name: "_HysterisisTexture");
             _ = RenderingUtils.ReAllocateIfNeeded(ref rtStipple, descriptor, name: "_StippleTexture");
             _ = RenderingUtils.ReAllocateIfNeeded(ref rtCombination, descriptor, name: "_CombinationTexture");
+            _ = RenderingUtils.ReAllocateIfNeeded(ref rtOverlay, descriptor, name: "_PaperOverlayTexture");
 
             RTHandle camTarget = renderingData.cameraData.renderer.cameraColorTargetHandle;
             RTHandle depthTarget = renderingData.cameraData.renderer.cameraDepthTargetHandle;
@@ -64,6 +69,10 @@ namespace MixJam13.Graphics.RendererFeatures.Inktober
 
             material.SetFloat("_InvertedEdgeLuminanceThreshold", settings.InvertedEdgeLuminanceThreshold);
 
+            material.SetTexture("_OverlayTex", settings.PaperOverlayTexture);
+            material.SetColor("_OverlayTint", settings.PaperTint);
+            material.SetColor("_InkColor", settings.InkColor);
+
             using (new ProfilingScope(cmd, new ProfilingSampler("Luminance Pass")))
             {
                 Blitter.BlitCameraTexture(cmd, camTarget, rtLuminance, material, 0);
@@ -73,22 +82,18 @@ namespace MixJam13.Graphics.RendererFeatures.Inktober
             {
                 Blitter.BlitCameraTexture(cmd, rtLuminance, rtGradientIntensity, material, 2);
             }
-
             using (new ProfilingScope(cmd, new ProfilingSampler("Magnitude Suppression Pass")))
             {
                 Blitter.BlitCameraTexture(cmd, rtGradientIntensity, rtMagnitudeSuppression, material, 3);
             }
-
             using (new ProfilingScope(cmd, new ProfilingSampler("Double Threshold Pass")))
             {
                 Blitter.BlitCameraTexture(cmd, rtMagnitudeSuppression, rtDoubleThreshold, material, 4);
             }
-
             using (new ProfilingScope(cmd, new ProfilingSampler("Hysteresis Pass")))
             {
                 Blitter.BlitCameraTexture(cmd, rtDoubleThreshold, rtHysteresis, material, 5);
             }
-
             using (new ProfilingScope(cmd, new ProfilingSampler("Stippling Pass")))
             {
                 Blitter.BlitCameraTexture(cmd, rtLuminance, rtStipple, material, 6);
@@ -99,7 +104,11 @@ namespace MixJam13.Graphics.RendererFeatures.Inktober
                 material.SetTexture("_EdgeTex", rtHysteresis);
                 material.SetTexture("_LuminanceTex", rtLuminance);
                 Blitter.BlitCameraTexture(cmd, rtStipple, rtCombination, material, 7);
-                Blitter.BlitCameraTexture(cmd, rtCombination, camTarget);
+            }
+            using (new ProfilingScope(cmd, new ProfilingSampler("Paper Overlay Pass")))
+            {
+                Blitter.BlitCameraTexture(cmd, rtCombination, rtOverlay, material, 8);
+                Blitter.BlitCameraTexture(cmd, rtOverlay, camTarget);
             }
 
             context.ExecuteCommandBuffer(cmd);
@@ -110,12 +119,16 @@ namespace MixJam13.Graphics.RendererFeatures.Inktober
         public void Dispose()
         {
             rtLuminance?.Release();
+
             rtGradientIntensity?.Release();
             rtMagnitudeSuppression?.Release();
             rtDoubleThreshold?.Release();
             rtHysteresis?.Release();
+
             rtStipple?.Release();
+
             rtCombination?.Release();
+            rtOverlay?.Release();
         }
     }
 }
