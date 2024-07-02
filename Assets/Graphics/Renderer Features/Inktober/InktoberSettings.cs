@@ -9,16 +9,20 @@ namespace MixJam13.Graphics.RendererFeatures.Inktober
         [field:SerializeField] public RenderPassEvent RenderPassEvent { get; set; } = RenderPassEvent.AfterRenderingTransparents;
 
 
-        [field: SerializeField, Header("Canny Edge Detection Settings"), Range(0.0f, 1.0f)]
+        [field: SerializeField, Header("Canny Edge Detection Settings"), Range(0.0f, 1.0f), Tooltip("For Double Thresholding step. Low threshold edges will only be drawn when next to high threshold edges.")]
         public float LowThreshold { get; set; } = 0.1f;
         
 
-        [field: SerializeField, Range(0.0f, 1.0f)]
+        [field: SerializeField, Range(0.0f, 1.0f), Tooltip("For Double Thresholding. High threshold edges will always be drawn.")]
         public float HighThreshold { get; set; } = 0.8f;
 
 
-        [field: Space, SerializeField, Range(1.0f, 10.0f)]
+        [field: Space, SerializeField, Range(1.0f, 10.0f), Tooltip("Convolution matrix will sample pixels at this specified distance. This affects the width of the lines.")]
         public float SampleRange { get; set; } = 1.0f;
+
+
+        [field: Space, SerializeField, Range(0.0f, 1.0f), Tooltip("Required luminance of a pixel for edges to still be drawn (using inverted colours) on dark pixels.")]
+        public float InvertedEdgeLuminanceThreshold { get; set; } = 0.1f;
 
 
         [field: SerializeField, Header("Stippling")]

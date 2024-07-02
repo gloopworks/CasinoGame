@@ -72,10 +72,11 @@ MonoBehaviour:
   runInSceneView: 0
   settings:
     <RenderPassEvent>k__BackingField: 500
-    <LowThreshold>k__BackingField: 0.18
-    <HighThreshold>k__BackingField: 0.2
+    <LowThreshold>k__BackingField: 0.2
+    <HighThreshold>k__BackingField: 0.5
     <SampleRange>k__BackingField: 1
+    <InvertedEdgeLuminanceThreshold>k__BackingField: 0.1
     <StippleTexture>k__BackingField: {fileID: 2800000, guid: d8887be45c3de834bbc33d8c93dfce33, type: 3}
     <StippleSize>k__BackingField: 0.5
     <LuminanceContrast>k__BackingField: 1
-    <LuminanceCorrection>k__BackingField: 1.2
+    <LuminanceCorrection>k__BackingField: 1

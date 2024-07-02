@@ -371,13 +371,20 @@ Shader "Screen/Inktober"
 			SamplerState sampler_point_clamp;
 
 			TEXTURE2D(_EdgeTex);
+			TEXTURE2D(_LuminanceTex);
+
+			float _InvertedEdgeLuminanceThreshold;
 
 			float4 Frag(Varyings input) : SV_Target
 			{
 				float edge = _EdgeTex.Sample(sampler_point_clamp, input.texcoord).r;
 				float stipple = _BlitTexture.Sample(sampler_point_clamp, input.texcoord).r;
 
-				float4 result = 1 - (edge + stipple);
+				float luminance = _LuminanceTex.Sample(sampler_point_clamp, input.texcoord).r;
+				float aboveThreshold = step(_InvertedEdgeLuminanceThreshold, luminance);
+
+				float4 result = max(1 - (edge + stipple), 0);
+				result += (edge * stipple * aboveThreshold);
 
 				return result;
 			}

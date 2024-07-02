@@ -62,6 +62,8 @@ namespace MixJam13.Graphics.RendererFeatures.Inktober
             material.SetFloat("_LuminanceContrast", settings.LuminanceContrast);
             material.SetFloat("_LuminanceCorrection", settings.LuminanceCorrection);
 
+            material.SetFloat("_InvertedEdgeLuminanceThreshold", settings.InvertedEdgeLuminanceThreshold);
+
             using (new ProfilingScope(cmd, new ProfilingSampler("Luminance Pass")))
             {
                 Blitter.BlitCameraTexture(cmd, camTarget, rtLuminance, material, 0);
@@ -95,6 +97,7 @@ namespace MixJam13.Graphics.RendererFeatures.Inktober
             using (new ProfilingScope(cmd, new ProfilingSampler("Combination Pass")))
             {
                 material.SetTexture("_EdgeTex", rtHysteresis);
+                material.SetTexture("_LuminanceTex", rtLuminance);
                 Blitter.BlitCameraTexture(cmd, rtStipple, rtCombination, material, 7);
                 Blitter.BlitCameraTexture(cmd, rtCombination, camTarget);
             }
