@@ -322,27 +322,27 @@ Shader "Screen/Inktober"
 			#pragma vertex Vert
 			#pragma fragment Frag
 
-			float4 _BlitTexture_TexelSize;
 			SamplerState sampler_point_clamp;
 			SamplerState sampler_bilinear_repeat;
 
-			TEXTURE2D(_StippleTex);
-			float4 _StippleTex_TexelSize;
+			TEXTURE2D(_NoiseTex);
+			float4 _NoiseTex_TexelSize;
 
 			float _StippleSize;
 
+			TEXTURE2D(_LuminanceTex);
+			float4 _LuminanceTex_TexelSize;
 			float _LuminanceContrast, _LuminanceCorrection;
-
 
 			float4 Frag(Varyings input) : SV_Target
 			{
-				float luminance = _BlitTexture.Sample(sampler_point_clamp, input.texcoord).r;
+				float luminance = _LuminanceTex.Sample(sampler_point_clamp, input.texcoord).r;
 
 				float2 stippleCoord = input.texcoord;
-				stippleCoord *= _BlitTexture_TexelSize.zw * _StippleTex_TexelSize.xy;
+				stippleCoord *= _LuminanceTex_TexelSize.zw * _NoiseTex_TexelSize.xy;
 				stippleCoord *= _StippleSize;
 
-				float stipple = _StippleTex.Sample(sampler_bilinear_repeat, stippleCoord).r;
+				float stipple = _NoiseTex.Sample(sampler_bilinear_repeat, stippleCoord).r;
 
 				luminance = _LuminanceContrast * (luminance - 0.5f) + 0.5f;
 				luminance = min(1.0f, max(0.0f, luminance));
@@ -372,19 +372,27 @@ Shader "Screen/Inktober"
 
 			TEXTURE2D(_EdgeTex);
 			TEXTURE2D(_LuminanceTex);
+			TEXTURE2D(_StippleTex);
 
-			float _InvertedEdgeLuminanceThreshold;
+			TEXTURE2D(_VertexColorTex);
+
+			float _InvertedEdgeLuminanceThreshold, _InvertedEdgeBrightness;
 
 			float4 Frag(Varyings input) : SV_Target
 			{
 				float edge = _EdgeTex.Sample(sampler_point_clamp, input.texcoord).r;
-				float stipple = _BlitTexture.Sample(sampler_point_clamp, input.texcoord).r;
+				float stipple = _StippleTex.Sample(sampler_point_clamp, input.texcoord).r;
 
 				float luminance = _LuminanceTex.Sample(sampler_point_clamp, input.texcoord).r;
 				float aboveThreshold = step(_InvertedEdgeLuminanceThreshold, luminance);
 
+				float4 vertexColor = _VertexColorTex.Sample(sampler_point_clamp, input.texcoord);
+
 				float4 result = max(1 - (edge + stipple), 0);
-				result += (edge * stipple * aboveThreshold);
+				result *= vertexColor;
+
+				// Add Inverted Edges, note that default stipple is inverted (luminance 1 = black, luminance 0 = white)
+				result += (edge * stipple * aboveThreshold) * _InvertedEdgeBrightness;
 
 				return result;
 			}

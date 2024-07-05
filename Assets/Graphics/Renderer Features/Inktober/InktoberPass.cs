@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
@@ -6,13 +8,29 @@ namespace MixJam13.Graphics.RendererFeatures.Inktober
 {
     public class InktoberPass : ScriptableRenderPass
     {
-        public InktoberPass(Material material, InktoberSettings settings)
+        public InktoberPass(Material screenMaterial, Material overrideMaterial, InktoberSettings settings)
         {
-            this.material = material;
+            this.screenMaterial = screenMaterial;
+            this.overrideMaterial = overrideMaterial;
+
             this.settings = settings;
+
+            filteringSettings = new FilteringSettings(RenderQueueRange.opaque);
+
+            shaderTags = new List<ShaderTagId>
+            {
+                new ShaderTagId("SRPDefaultUnlit"),
+                new ShaderTagId("UniversalForward"),
+                new ShaderTagId("UniversalForwardOnly")
+            };
         }
 
-        private Material material;
+        private List<ShaderTagId> shaderTags;
+        private FilteringSettings filteringSettings;
+
+        private Material screenMaterial;
+        private Material overrideMaterial;
+
         private InktoberSettings settings;
 
         private RTHandle rtLuminance;
@@ -27,19 +45,23 @@ namespace MixJam13.Graphics.RendererFeatures.Inktober
         private RTHandle rtCombination;
         private RTHandle rtOverlay;
 
+        private RTHandle rtVertexColor;
+
         public override void OnCameraSetup(CommandBuffer cmd, ref RenderingData renderingData)
         {
             RenderTextureDescriptor descriptor = renderingData.cameraData.cameraTargetDescriptor;
             descriptor.depthBufferBits = 0;
 
-            _ = RenderingUtils.ReAllocateIfNeeded(ref rtLuminance, descriptor, name: "_LuminanceTexture");
-            _ = RenderingUtils.ReAllocateIfNeeded(ref rtGradientIntensity, descriptor, name: "_GradientIntensityTexture");
-            _ = RenderingUtils.ReAllocateIfNeeded(ref rtMagnitudeSuppression, descriptor, name: "_MagnitudeSuppressionTexture");
-            _ = RenderingUtils.ReAllocateIfNeeded(ref rtDoubleThreshold, descriptor, name: "_DoubleThresholdTexture");
-            _ = RenderingUtils.ReAllocateIfNeeded(ref rtHysteresis, descriptor, name: "_HysterisisTexture");
-            _ = RenderingUtils.ReAllocateIfNeeded(ref rtStipple, descriptor, name: "_StippleTexture");
-            _ = RenderingUtils.ReAllocateIfNeeded(ref rtCombination, descriptor, name: "_CombinationTexture");
-            _ = RenderingUtils.ReAllocateIfNeeded(ref rtOverlay, descriptor, name: "_PaperOverlayTexture");
+            _ = RenderingUtils.ReAllocateIfNeeded(ref rtLuminance, descriptor);
+            _ = RenderingUtils.ReAllocateIfNeeded(ref rtGradientIntensity, descriptor);
+            _ = RenderingUtils.ReAllocateIfNeeded(ref rtMagnitudeSuppression, descriptor);
+            _ = RenderingUtils.ReAllocateIfNeeded(ref rtDoubleThreshold, descriptor);
+            _ = RenderingUtils.ReAllocateIfNeeded(ref rtHysteresis, descriptor);
+            _ = RenderingUtils.ReAllocateIfNeeded(ref rtStipple, descriptor);
+            _ = RenderingUtils.ReAllocateIfNeeded(ref rtCombination, descriptor);
+            _ = RenderingUtils.ReAllocateIfNeeded(ref rtOverlay, descriptor);
+
+            _ = RenderingUtils.ReAllocateIfNeeded(ref rtVertexColor, descriptor);
 
             RTHandle camTarget = renderingData.cameraData.renderer.cameraColorTargetHandle;
             RTHandle depthTarget = renderingData.cameraData.renderer.cameraDepthTargetHandle;
@@ -56,59 +78,72 @@ namespace MixJam13.Graphics.RendererFeatures.Inktober
             context.ExecuteCommandBuffer(cmd);
             cmd.Clear();
 
-            material.SetFloat("_SampleRange", settings.SampleRange);
+            screenMaterial.SetFloat("_SampleRange", settings.SampleRange);
 
-            material.SetFloat("_LowThreshold", settings.LowThreshold);
-            material.SetFloat("_HighThreshold", settings.HighThreshold);
+            screenMaterial.SetFloat("_LowThreshold", settings.LowThreshold);
+            screenMaterial.SetFloat("_HighThreshold", settings.HighThreshold);
 
-            material.SetTexture("_StippleTex", settings.StippleTexture);
-            material.SetFloat("_StippleSize", settings.StippleSize);
+            screenMaterial.SetTexture("_NoiseTex", settings.StippleTexture);
+            screenMaterial.SetFloat("_StippleSize", settings.StippleSize);
 
-            material.SetFloat("_LuminanceContrast", settings.LuminanceContrast);
-            material.SetFloat("_LuminanceCorrection", settings.LuminanceCorrection);
+            screenMaterial.SetFloat("_LuminanceContrast", settings.LuminanceContrast);
+            screenMaterial.SetFloat("_LuminanceCorrection", settings.LuminanceCorrection);
 
-            material.SetFloat("_InvertedEdgeLuminanceThreshold", settings.InvertedEdgeLuminanceThreshold);
+            screenMaterial.SetFloat("_InvertedEdgeLuminanceThreshold", settings.InvertedEdgeLuminanceThreshold);
+            screenMaterial.SetFloat("_InvertedEdgeBrightness", settings.InvertedEdgeBrightness);
 
-            material.SetTexture("_OverlayTex", settings.PaperOverlayTexture);
-            material.SetColor("_OverlayTint", settings.PaperTint);
-            material.SetColor("_InkColor", settings.InkColor);
+            screenMaterial.SetTexture("_OverlayTex", settings.PaperOverlayTexture);
+            screenMaterial.SetColor("_OverlayTint", settings.PaperTint);
+            screenMaterial.SetColor("_InkColor", settings.InkColor);
 
             using (new ProfilingScope(cmd, new ProfilingSampler("Luminance Pass")))
             {
-                Blitter.BlitCameraTexture(cmd, camTarget, rtLuminance, material, 0);
+                Blitter.BlitCameraTexture(cmd, camTarget, rtLuminance, screenMaterial, 0);
+                screenMaterial.SetTexture("_LuminanceTex", rtLuminance);
             }
-
             using (new ProfilingScope(cmd, new ProfilingSampler("Gradient Intensity Pass")))
             {
-                Blitter.BlitCameraTexture(cmd, rtLuminance, rtGradientIntensity, material, 2);
+                Blitter.BlitCameraTexture(cmd, rtLuminance, rtGradientIntensity, screenMaterial, 2);
             }
             using (new ProfilingScope(cmd, new ProfilingSampler("Magnitude Suppression Pass")))
             {
-                Blitter.BlitCameraTexture(cmd, rtGradientIntensity, rtMagnitudeSuppression, material, 3);
+                Blitter.BlitCameraTexture(cmd, rtGradientIntensity, rtMagnitudeSuppression, screenMaterial, 3);
             }
             using (new ProfilingScope(cmd, new ProfilingSampler("Double Threshold Pass")))
             {
-                Blitter.BlitCameraTexture(cmd, rtMagnitudeSuppression, rtDoubleThreshold, material, 4);
+                Blitter.BlitCameraTexture(cmd, rtMagnitudeSuppression, rtDoubleThreshold, screenMaterial, 4);
             }
             using (new ProfilingScope(cmd, new ProfilingSampler("Hysteresis Pass")))
             {
-                Blitter.BlitCameraTexture(cmd, rtDoubleThreshold, rtHysteresis, material, 5);
+                Blitter.BlitCameraTexture(cmd, rtDoubleThreshold, rtHysteresis, screenMaterial, 5);
+                screenMaterial.SetTexture("_EdgeTex", rtHysteresis);
             }
             using (new ProfilingScope(cmd, new ProfilingSampler("Stippling Pass")))
             {
-                Blitter.BlitCameraTexture(cmd, rtLuminance, rtStipple, material, 6);
+                Blitter.BlitCameraTexture(cmd, rtLuminance, rtStipple, screenMaterial, 6);
+                screenMaterial.SetTexture("_StippleTex", rtStipple);
+            }
+
+            Blitter.BlitCameraTexture(cmd, camTarget, rtVertexColor);
+
+            context.ExecuteCommandBuffer(cmd);
+            cmd.Clear();
+
+            using (new ProfilingScope(cmd, new ProfilingSampler("Vertex Color Pass")))
+            {
+                SortingCriteria sortingCriteria = renderingData.cameraData.defaultOpaqueSortFlags;
+
+                DrawingSettings drawingSettings = CreateDrawingSettings(shaderTags, ref renderingData, sortingCriteria);
+                drawingSettings.overrideMaterial = overrideMaterial;
+
+                context.DrawRenderers(renderingData.cullResults, ref drawingSettings, ref filteringSettings);
             }
 
             using (new ProfilingScope(cmd, new ProfilingSampler("Combination Pass")))
             {
-                material.SetTexture("_EdgeTex", rtHysteresis);
-                material.SetTexture("_LuminanceTex", rtLuminance);
-                Blitter.BlitCameraTexture(cmd, rtStipple, rtCombination, material, 7);
-            }
-            using (new ProfilingScope(cmd, new ProfilingSampler("Paper Overlay Pass")))
-            {
-                Blitter.BlitCameraTexture(cmd, rtCombination, rtOverlay, material, 8);
-                Blitter.BlitCameraTexture(cmd, rtOverlay, camTarget);
+                screenMaterial.SetTexture("_VertexColorTex", rtVertexColor);
+                Blitter.BlitCameraTexture(cmd, rtStipple, rtCombination, screenMaterial, 7);
+                Blitter.BlitCameraTexture(cmd, rtCombination, camTarget);
             }
 
             context.ExecuteCommandBuffer(cmd);
@@ -129,6 +164,8 @@ namespace MixJam13.Graphics.RendererFeatures.Inktober
 
             rtCombination?.Release();
             rtOverlay?.Release();
+
+            rtVertexColor?.Release();
         }
     }
 }

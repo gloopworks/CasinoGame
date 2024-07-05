@@ -8,13 +8,18 @@ namespace MixJam13.Graphics.RendererFeatures.Inktober
     {
         [SerializeField] private bool runInSceneView;
         [SerializeField] private InktoberSettings settings;
-        private Material material;
+        
+        private Material screenMaterial;
+        private Material overrideMaterial;
+
         private InktoberPass pass;
 
         public override void Create()
         {
-            material = CoreUtils.CreateEngineMaterial("Screen/Inktober");
-            pass = new InktoberPass(material, settings)
+            screenMaterial = CoreUtils.CreateEngineMaterial("Screen/Inktober");
+            overrideMaterial = CoreUtils.CreateEngineMaterial("Unlit/VertexColorOnly");
+
+            pass = new InktoberPass(screenMaterial, overrideMaterial, settings)
             {
                 renderPassEvent = settings.RenderPassEvent
             };

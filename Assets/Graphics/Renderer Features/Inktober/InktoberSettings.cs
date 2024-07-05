@@ -24,6 +24,10 @@ namespace MixJam13.Graphics.RendererFeatures.Inktober
         [field: Space, SerializeField, Range(0.0f, 1.0f), Tooltip("Required luminance of a pixel for edges to still be drawn (using inverted colours) on dark pixels.")]
         public float InvertedEdgeLuminanceThreshold { get; set; } = 0.1f;
 
+        
+        [field: Space, SerializeField, Range(0.0f, 2.0f), Tooltip("The Brightness added onto the underlying vertex color to create the color for inverted edges.")]
+        public float InvertedEdgeBrightness { get; set; }
+
 
         [field: SerializeField, Header("Stippling")]
         public Texture2D StippleTexture { get; set; }

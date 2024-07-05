@@ -13,8 +13,10 @@ namespace MixJam13.Graphics.RendererFeatures.VertexColors
             this.overrideMaterial = overrideMaterial;
             filteringSettings = new FilteringSettings(RenderQueueRange.opaque);
 
-            shaderTags = new List<ShaderTagId>();
-            shaderTags.Add(new ShaderTagId("UniversalForward"));
+            shaderTags = new List<ShaderTagId>
+            {
+                new ShaderTagId("UniversalForward")
+            };
         }
 
         private List<ShaderTagId> shaderTags;
@@ -29,13 +31,13 @@ namespace MixJam13.Graphics.RendererFeatures.VertexColors
             context.ExecuteCommandBuffer(cmd);
             cmd.Clear();
 
-            SortingCriteria sortingCriteria = renderingData.cameraData.defaultOpaqueSortFlags;
-
-            DrawingSettings drawingSettings = CreateDrawingSettings(shaderTags, ref renderingData, sortingCriteria);
-            drawingSettings.overrideMaterial = overrideMaterial;
-
             using (new ProfilingScope(cmd, new ProfilingSampler("Draw Vertex Colors")))
             {
+                SortingCriteria sortingCriteria = renderingData.cameraData.defaultOpaqueSortFlags;
+
+                DrawingSettings drawingSettings = CreateDrawingSettings(shaderTags, ref renderingData, sortingCriteria);
+                drawingSettings.overrideMaterial = overrideMaterial;
+
                 context.DrawRenderers(renderingData.cullResults, ref drawingSettings, ref filteringSettings);
             }
 
