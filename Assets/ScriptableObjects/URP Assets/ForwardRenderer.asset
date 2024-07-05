@@ -1,5 +1,20 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-923918189026441093
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fb28446d4d2012c4ca5373917aba61f4, type: 3}
+  m_Name: VertexColorsFeature
+  m_EditorClassIdentifier: 
+  m_Active: 1
+  renderPassEvent: 300
+  runInSceneView: 1
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -17,7 +32,8 @@ MonoBehaviour:
     hdrDebugViewPS: {fileID: 4800000, guid: 573620ae32aec764abd4d728906d2587, type: 3}
   m_RendererFeatures:
   - {fileID: 4686298226835213265}
-  m_RendererFeatureMap: d14b0e8268130941
+  - {fileID: -923918189026441093}
+  m_RendererFeatureMap: d14b0e82681309417b888e5d4d952df3
   m_UseNativeRenderPass: 0
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
   xrSystemData: {fileID: 11400000, guid: 60e1133243b97e347b653163a8c01b64, type: 2}
@@ -68,18 +84,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 551c7e5843dc4e24395ad3dff5254c92, type: 3}
   m_Name: InktoberFeature
   m_EditorClassIdentifier: 
-  m_Active: 1
+  m_Active: 0
   runInSceneView: 0
   settings:
     <RenderPassEvent>k__BackingField: 500
-    <LowThreshold>k__BackingField: 0.2
-    <HighThreshold>k__BackingField: 0.5
-    <SampleRange>k__BackingField: 1
+    <LowThreshold>k__BackingField: 0.1
+    <HighThreshold>k__BackingField: 0.4
+    <SampleRange>k__BackingField: 2
     <InvertedEdgeLuminanceThreshold>k__BackingField: 0.1
-    <StippleTexture>k__BackingField: {fileID: 2800000, guid: d8887be45c3de834bbc33d8c93dfce33, type: 3}
-    <StippleSize>k__BackingField: 1
-    <LuminanceContrast>k__BackingField: 2
-    <LuminanceCorrection>k__BackingField: 1
+    <StippleTexture>k__BackingField: {fileID: 2800000, guid: 612fc81b37a281142883f681c4100bde, type: 3}
+    <StippleSize>k__BackingField: 0.999
+    <LuminanceContrast>k__BackingField: 1.2
+    <LuminanceCorrection>k__BackingField: 3
     <PaperOverlayTexture>k__BackingField: {fileID: 2800000, guid: da69029af9c77fb458449022b6779209, type: 3}
-    <PaperTint>k__BackingField: {r: 1, g: 0.9845544, b: 0.9292453, a: 1}
-    <InkColor>k__BackingField: {r: 0.11320752, g: 0.07589443, b: 0.04432181, a: 1}
+    <PaperTint>k__BackingField: {r: 1, g: 0.45814484, b: 0.3915094, a: 1}
+    <InkColor>k__BackingField: {r: 0.05887327, g: 0.20160386, b: 0.254717, a: 1}

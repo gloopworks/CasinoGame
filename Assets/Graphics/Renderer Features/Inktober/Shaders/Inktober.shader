@@ -339,10 +339,10 @@ Shader "Screen/Inktober"
 				float luminance = _BlitTexture.Sample(sampler_point_clamp, input.texcoord).r;
 
 				float2 stippleCoord = input.texcoord;
-				stippleCoord *= _BlitTexture_TexelSize.zw * _StippleTex_TexelSize;
+				stippleCoord *= _BlitTexture_TexelSize.zw * _StippleTex_TexelSize.xy;
 				stippleCoord *= _StippleSize;
 
-				float stipple = _StippleTex.Sample(sampler_bilinear_repeat, stippleCoord);
+				float stipple = _StippleTex.Sample(sampler_bilinear_repeat, stippleCoord).r;
 
 				luminance = _LuminanceContrast * (luminance - 0.5f) + 0.5f;
 				luminance = min(1.0f, max(0.0f, luminance));
