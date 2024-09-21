@@ -10,6 +10,9 @@ Shader "Unlit/VertexColorOnly"
 			Name "UniversalForward"
 			Tags { "LightMode"  = "UniversalForward" }
 
+			ZWrite On
+			ZTest LEqual
+
 			HLSLPROGRAM
             #pragma vertex Vertex
             #pragma fragment Fragment
@@ -34,9 +37,7 @@ Shader "Unlit/VertexColorOnly"
                 
                 float3 posOS = input.positionOS.xyz;
 
-                VertexPositionInputs posnInputs = GetVertexPositionInputs(posOS);
-
-				output.positionCS = posnInputs.positionCS;
+				output.positionCS = TransformObjectToHClip(posOS);
 				output.color = input.color;
 
 				return output;
