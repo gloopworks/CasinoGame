@@ -7,17 +7,21 @@ namespace MixJam13.Graphics.RendererFeatures.VertexColors
 {
     public class VertexColorsFeature : ScriptableRendererFeature
     {
-        [SerializeField] private RenderPassEvent renderPassEvent;
-        [SerializeField] private bool runInSceneView;
+        [SerializeField] private Material screenMaterial;
 
-        private Material material;
+        [Space]
+
+        [SerializeField] private bool runInSceneView;
+        [SerializeField] private RenderPassEvent renderPassEvent;
+
+        private Material overrideMaterial;
         private VertexColorsPass mainPass;
 
         public override void Create()
         {
-            material = CoreUtils.CreateEngineMaterial("Unlit/VertexColorOnly");
+            overrideMaterial = CoreUtils.CreateEngineMaterial("Unlit/VertexColorOnly");
 
-            mainPass = new VertexColorsPass(material)
+            mainPass = new VertexColorsPass(overrideMaterial, screenMaterial)
             {
                 renderPassEvent = renderPassEvent
             };
@@ -37,6 +41,14 @@ namespace MixJam13.Graphics.RendererFeatures.VertexColors
             }
 #endif
             renderer.EnqueuePass(mainPass);
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            CoreUtils.Destroy(overrideMaterial);
+            mainPass.Dispose();
+
+            base.Dispose(disposing);
         }
     }
 }

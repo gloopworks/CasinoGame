@@ -8,28 +8,13 @@ namespace MixJam13.Graphics.RendererFeatures.Inktober
 {
     public class InktoberPass : ScriptableRenderPass
     {
-        public InktoberPass(Material screenMaterial, Material overrideMaterial, InktoberSettings settings)
+        public InktoberPass(Material screenMaterial, InktoberSettings settings)
         {
             this.screenMaterial = screenMaterial;
-            this.overrideMaterial = overrideMaterial;
-
             this.settings = settings;
-
-            filteringSettings = new FilteringSettings(RenderQueueRange.opaque);
-
-            shaderTags = new List<ShaderTagId>
-            {
-                new ShaderTagId("SRPDefaultUnlit"),
-                new ShaderTagId("UniversalForward"),
-                new ShaderTagId("UniversalForwardOnly")
-            };
         }
 
-        private List<ShaderTagId> shaderTags;
-        private FilteringSettings filteringSettings;
-
         private Material screenMaterial;
-        private Material overrideMaterial;
 
         private InktoberSettings settings;
 
@@ -45,8 +30,6 @@ namespace MixJam13.Graphics.RendererFeatures.Inktober
         private RTHandle rtCombination;
         private RTHandle rtOverlay;
 
-        private RTHandle rtVertexColor;
-
         public override void OnCameraSetup(CommandBuffer cmd, ref RenderingData renderingData)
         {
             RenderTextureDescriptor descriptor = renderingData.cameraData.cameraTargetDescriptor;
@@ -60,8 +43,6 @@ namespace MixJam13.Graphics.RendererFeatures.Inktober
             _ = RenderingUtils.ReAllocateIfNeeded(ref rtStipple, descriptor);
             _ = RenderingUtils.ReAllocateIfNeeded(ref rtCombination, descriptor);
             _ = RenderingUtils.ReAllocateIfNeeded(ref rtOverlay, descriptor);
-
-            _ = RenderingUtils.ReAllocateIfNeeded(ref rtVertexColor, descriptor);
 
             RTHandle camTarget = renderingData.cameraData.renderer.cameraColorTargetHandle;
             RTHandle depthTarget = renderingData.cameraData.renderer.cameraDepthTargetHandle;
@@ -123,25 +104,8 @@ namespace MixJam13.Graphics.RendererFeatures.Inktober
                 Blitter.BlitCameraTexture(cmd, rtLuminance, rtStipple, screenMaterial, 6);
                 screenMaterial.SetTexture("_StippleTex", rtStipple);
             }
-
-            Blitter.BlitCameraTexture(cmd, camTarget, rtVertexColor);
-
-            context.ExecuteCommandBuffer(cmd);
-            cmd.Clear();
-
-            using (new ProfilingScope(cmd, new ProfilingSampler("Vertex Color Pass")))
-            {
-                SortingCriteria sortingCriteria = renderingData.cameraData.defaultOpaqueSortFlags;
-
-                DrawingSettings drawingSettings = CreateDrawingSettings(shaderTags, ref renderingData, sortingCriteria);
-                drawingSettings.overrideMaterial = overrideMaterial;
-
-                context.DrawRenderers(renderingData.cullResults, ref drawingSettings, ref filteringSettings);
-            }
-
             using (new ProfilingScope(cmd, new ProfilingSampler("Combination Pass")))
             {
-                screenMaterial.SetTexture("_VertexColorTex", rtVertexColor);
                 Blitter.BlitCameraTexture(cmd, rtStipple, rtCombination, screenMaterial, 7);
                 Blitter.BlitCameraTexture(cmd, rtCombination, camTarget);
             }
@@ -164,8 +128,6 @@ namespace MixJam13.Graphics.RendererFeatures.Inktober
 
             rtCombination?.Release();
             rtOverlay?.Release();
-
-            rtVertexColor?.Release();
         }
     }
 }

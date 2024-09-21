@@ -16,8 +16,9 @@ MonoBehaviour:
     debugReplacementPS: {fileID: 4800000, guid: cf852408f2e174538bcd9b7fda1c5ae7, type: 3}
     hdrDebugViewPS: {fileID: 4800000, guid: 573620ae32aec764abd4d728906d2587, type: 3}
   m_RendererFeatures:
+  - {fileID: 842170049596697167}
   - {fileID: 4686298226835213265}
-  m_RendererFeatureMap: d14b0e8268130941
+  m_RendererFeatureMap: 4f2aafb632fdaf0bd14b0e8268130941
   m_UseNativeRenderPass: 0
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
   xrSystemData: {fileID: 11400000, guid: 60e1133243b97e347b653163a8c01b64, type: 2}
@@ -56,6 +57,22 @@ MonoBehaviour:
   m_CopyDepthMode: 1
   m_AccurateGbufferNormals: 0
   m_IntermediateTextureMode: 1
+--- !u!114 &842170049596697167
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fb28446d4d2012c4ca5373917aba61f4, type: 3}
+  m_Name: VertexColorsFeature
+  m_EditorClassIdentifier: 
+  m_Active: 1
+  screenMaterial: {fileID: 2100000, guid: 849a9f5dd3777f34cbd49ed32fa211de, type: 2}
+  runInSceneView: 1
+  renderPassEvent: 500
 --- !u!114 &4686298226835213265
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -69,7 +86,8 @@ MonoBehaviour:
   m_Name: InktoberFeature
   m_EditorClassIdentifier: 
   m_Active: 1
-  runInSceneView: 0
+  screenMaterial: {fileID: 2100000, guid: 849a9f5dd3777f34cbd49ed32fa211de, type: 2}
+  runInSceneView: 1
   settings:
     <RenderPassEvent>k__BackingField: 500
     <LowThreshold>k__BackingField: 0.1
@@ -78,7 +96,7 @@ MonoBehaviour:
     <InvertedEdgeLuminanceThreshold>k__BackingField: 1
     <InvertedEdgeBrightness>k__BackingField: 1
     <StippleTexture>k__BackingField: {fileID: 2800000, guid: 612fc81b37a281142883f681c4100bde, type: 3}
-    <StippleSize>k__BackingField: 0.999
+    <StippleSize>k__BackingField: 0.5
     <LuminanceContrast>k__BackingField: 1.2
     <LuminanceCorrection>k__BackingField: 3
     <PaperOverlayTexture>k__BackingField: {fileID: 2800000, guid: da69029af9c77fb458449022b6779209, type: 3}
